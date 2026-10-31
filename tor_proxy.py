@@ -92,6 +92,6 @@ def torsocks_env() -> dict[str, str]:
     # Point torsocks at our Tor SOCKS port.
     Path("/tmp/avd_tor_ocr").mkdir(parents=True, exist_ok=True)
     Path("/tmp/avd_tor_ocr/torsocks.conf").write_text(
-        f"TorAddress 127.0.0.1\nTorPort {TOR_SOCKS_PORT}\n"
+        f"TorAddress 127.0.0.1\nTorPort {TOR_SOCKS_PORT}\nAllowLocalOutbound yes\n"
     )
     return env

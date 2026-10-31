@@ -100,6 +100,15 @@ wait_for_boot() {
 start_emulator() {
   local use_tor="${1:-false}"
 
+  # Write torsocks config allowing local ADB connections while routing external traffic through Tor
+  mkdir -p /tmp/avd_tor_ocr
+  cat > /tmp/avd_tor_ocr/torsocks.conf <<EOF
+TorAddress 127.0.0.1
+TorPort 9050
+AllowLocalOutbound yes
+EOF
+  export TORSOCKS_CONF=/tmp/avd_tor_ocr/torsocks.conf
+
   # Make sure an old emulator isn't still running
   "$ADB" emu kill >/dev/null 2>&1 || true
   pkill -f "emulator.*$AVD_NAME" >/dev/null 2>&1 || true
@@ -107,13 +116,13 @@ start_emulator() {
 
   create_avd
 
-  local emulator_args=( -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim -gpu "$GPU" )
+  local emulator_args=( -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim -gpu "$GPU" -no-metrics )
   if [ "$use_tor" = "true" ]; then
     log "Starting emulator '$AVD_NAME' via torsocks (Tor routing)..."
-    torsocks "$EMULATOR" "${emulator_args[@]}" >/dev/null 2>&1 &
+    torsocks "$EMULATOR" "${emulator_args[@]}" > "$HOME/avd-emulator.log" 2>&1 &
   else
     log "Starting emulator '$AVD_NAME' (no Tor)..."
-    "$EMULATOR" "${emulator_args[@]}" >/dev/null 2>&1 &
+    "$EMULATOR" "${emulator_args[@]}" > "$HOME/avd-emulator.log" 2>&1 &
   fi
 
   wait_for_boot
